@@ -6,6 +6,7 @@ import javax.servlet.ServletContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.alerting.AlertingPlugin;
+import org.stagemonitor.alerting.alerter.AlerterFactory;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.IOUtils;
@@ -48,12 +49,14 @@ public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 
 	@Override
 	public String getContentToInjectBeforeClosingBody(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
-		return widgetTemplate.replace("@@JSON_REQUEST_TACE_PLACEHOLDER@@", requestInformation.getRequestTrace().toJson())
+		HttpRequestTrace requestTrace = requestInformation.getRequestTrace();
+		AlerterFactory alerterFactory = alertingPlugin.getAlerterFactory();
+		return widgetTemplate.replace("@@JSON_REQUEST_TACE_PLACEHOLDER@@", requestTrace != null ? requestTrace.toJson() : "null")
 				.replace("@@CONFIGURATION_OPTIONS@@", JsonUtils.toJson(configuration.getConfigurationOptionsByCategory()))
 				.replace("@@CONFIGURATION_PWD_SET@@", Boolean.toString(configuration.isPasswordSet()))
 				.replace("@@CONFIGURATION_SOURCES@@", JsonUtils.toJson(configuration.getNamesOfConfigurationSources()))
 				.replace("@@MEASUREMENT_SESSION@@", JsonUtils.toJson(Stagemonitor.getMeasurementSession()))
-				.replace("@@ALERTER_TYPES@@", JsonUtils.toJson(alertingPlugin.getAlerterFactory().getAvailableAlerters()))
+				.replace("@@ALERTER_TYPES@@", alerterFactory != null ? JsonUtils.toJson(alerterFactory.getAvailableAlerters()): "null")
 				.replace("@@PATHS_OF_WIDGET_METRIC_TAB_PLUGINS@@", JsonUtils.toJson(Stagemonitor.getPathsOfWidgetMetricTabPlugins()));
 	}
 }
